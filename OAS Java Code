@@ -1,0 +1,192 @@
+import java.util.*;
+interface Bidable {
+    void placeBid(String bidder, double amount) throws InvalidBidException;
+    double getCurrentPrice();
+}
+class InvalidBidException extends Exception {
+    public InvalidBidException(String message) {
+        super(message);
+    }
+}
+class Item implements Bidable {
+    private String name;
+    private double minBid;
+    protected double highBid;
+    private String highBidder;
+    private String category;
+    private List<String> bidHistory;
+    public Item(String name, String category, double minBid) {
+        this.name = name;
+        this.category = category;
+        this.minBid = minBid;
+        this.highBid = 0.0;
+        this.highBidder = "No bids yet";
+        this.bidHistory = new ArrayList<>();
+    }
+    public String getName() { 
+      return name;
+    }
+    public String getCategory() { 
+      return category; 
+    }
+    public double getMinBid() { 
+      return minBid; 
+    }
+    public double getHighBid() { 
+      return highBid; 
+    }
+    public String getHighBidder() { 
+      return highBidder; 
+    }
+    public void placeBid(String bidder, double amount) throws InvalidBidException {
+        if (amount < minBid || amount <= highBid) {
+            throw new InvalidBidException("Bid must be at least " + minBid + " and higher than the current highest bid.");
+        }
+        bidHistory.add("Bidder: " + bidder + " | Amount: ₹" + amount);
+        highBid = amount;
+        highBidder = bidder;
+        System.out.println("Bid placed successfully by " + bidder + " for " + name);
+    }
+    public double getCurrentPrice() {
+        return highBid > 0 ? highBid : minBid;
+    }
+    public void displayBidHistory() {
+        System.out.println("Bid history for " + name + ":");
+        if (bidHistory.isEmpty()) {
+            System.out.println("No bids yet.");
+        } else {
+            for (String bid : bidHistory) {
+                System.out.println(bid);
+            }
+        }
+    }
+}
+class Electronics extends Item {
+    public Electronics(String name, double minBid) {
+        super(name, "Electronics", minBid);
+    }
+}
+
+
+class Art extends Item {
+    public Art(String name, double minBid) {
+        super(name, "Art", minBid);
+    }
+}
+
+
+class Collectibles extends Item {
+    public Collectibles(String name, double minBid) {
+        super(name, "Collectibles", minBid);
+    }
+}
+
+
+class Auction {
+    private List<Item> items = new ArrayList<>();
+    private List<String> categories = new ArrayList<>();
+    public void addItem(Item item) {
+        items.add(item);
+        if (!categories.contains(item.getCategory())) {
+            categories.add(item.getCategory());
+        }
+        System.out.println("Item added: " + item.getName() + " (Category: " + item.getCategory() + ", Min Bid: ₹" + item.getMinBid() + ")");
+    }
+    public void displayCategories() {
+        System.out.println("\nAvailable Categories:");
+        for (String category : categories) {
+            System.out.println("- " + category);
+        }
+    }
+    public void displayItemsInCategory(String category) {
+        boolean found = false;
+        System.out.println("\nItems in category: " + category);
+        for (Item item : items) {
+            if (item.getCategory().equalsIgnoreCase(category)) {
+                System.out.println("- " + item.getName() + " (Min Bid: ₹" + item.getMinBid() + ")");
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("No items found in this category.");
+        }
+    }
+    public void placeBid(String itemName, String bidder, double amount) {
+        for (Item item : items) {
+            if (item.getName().equalsIgnoreCase(itemName)) {
+                try {
+                    item.placeBid(bidder, amount);
+                    item.displayBidHistory();
+                } catch (InvalidBidException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+                return;
+            }
+        }
+        System.out.println("Item not found.");
+    }
+    public void displayResults() {
+        System.out.println("\nAuction Results:");
+        for (Item item : items) {
+            System.out.println("Item: " + item.getName() + " (Category: " + item.getCategory() + "), Highest Bid: ₹" + item.getHighBid() + ", Winner: " + item.getHighBidder());
+        }
+    }
+}
+
+
+public class AuctionSystem {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Auction auction = new Auction();
+        while (true) {
+            System.out.println("\nMenu:");
+            System.out.println("1. Place an item for bid");
+            System.out.println("2. Place a bid");
+            System.out.println("3. View auction results");
+            System.out.println("4. Exit");
+            System.out.print("Choose an option: ");
+            int choice = sc.nextInt();
+            sc.nextLine();
+            if (choice == 1) {
+                System.out.print("Enter item name: ");
+                String itemName = sc.nextLine();
+                System.out.print("Enter item category (Electronics, Art, Jewelry, Equipment, Accessories, Property, Collectibles, Other): ");
+                String category = sc.nextLine();
+                System.out.print("Enter minimum bid amount: ");
+                double minBid = sc.nextDouble();
+                sc.nextLine();
+                Item item;
+                if (category.equalsIgnoreCase("electronics")) {
+                    item = new Electronics(itemName, minBid);
+                } else if (category.equalsIgnoreCase("art")) {
+                    item = new Art(itemName, minBid);
+                } else if (category.equalsIgnoreCase("collectibles")) {
+                    item = new Collectibles(itemName, minBid);
+                } else {
+                    item = new Item(itemName, category, minBid);
+                }
+                auction.addItem(item);
+            } else if (choice == 2) {
+                auction.displayCategories();
+                System.out.print("Enter category to view items: ");
+                String category = sc.nextLine();
+                auction.displayItemsInCategory(category);
+                System.out.print("Enter item name to bid: ");
+                String itemName = sc.nextLine();
+                System.out.print("Enter bidder name: ");
+                String bidder = sc.nextLine();
+                System.out.print("Enter bid amount: ");
+                double amount = sc.nextDouble();
+                sc.nextLine();
+                auction.placeBid(itemName, bidder, amount);
+            } else if (choice == 3) {
+                auction.displayResults();
+            } else if (choice == 4) {
+                System.out.println("Exiting the auction system. Goodbye!");
+                break;
+            } else {
+                System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+}
